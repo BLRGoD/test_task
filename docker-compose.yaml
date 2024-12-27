@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+
+  clickhouse-server:
+    image: clickhouse/clickhouse-server
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - ./clickhouse-data:/var/lib/clickhouse
+    networks:
+      - click_network
+
+
+  airflow-webserver:
+    image: apache/airflow:2.6.3
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow-data/dags:/opt/airflow/dags
+    command: ["bash", "-c", "pip install clickhouse-driver backports.zoneinfo && airflow db init && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password 'admin_password' && airflow webserver"]
+    depends_on:
+      - airflow-scheduler
+      - postgres
+    networks:
+      - click_network
+
+
+  airflow-scheduler:
+    image: apache/airflow:2.6.3
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    volumes:
+      - ./airflow-data:/usr/local/airflow
+    command: ["bash", "-c", "airflow db init && airflow scheduler"]
+    depends_on:
+      - postgres
+    networks:
+      - click_network
+
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - click_network
+
+
+
+  dbt:
+    build:
+      context: ./dbt
+      dockerfile: Dockerfile
+    volumes:
+      - ./dbt:/usr/app
+      - ./dbt:/root/.dbt
+    working_dir: /usr/app
+    entrypoint: ["dbt"]
+    networks:
+      - click_network
+
+volumes:
+    postgres_data:
+
+
+networks:
+  click_network:
+    external: true
