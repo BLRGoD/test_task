@@ -27,6 +27,7 @@ services:
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+      - AIRFLOW__WEBSERVER__SECRET_KEY=8qA1HR3uPF/yW0cxrZS0Vg==
     ports:
       - "8080:8080"
     volumes:
@@ -45,11 +46,13 @@ services:
       context: ./airflow
       dockerfile: Dockerfile
     environment:
+      - AIRFLOW__WEBSERVER__SECRET_KEY=8qA1HR3uPF/yW0cxrZS0Vg==
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
     volumes:
       - ./airflow-data:/usr/local/airflow
-    command: ["bash", "-c", "airflow db init && airflow scheduler"]
+      - ./airflow-data/dags:/opt/airflow/dags
+    command: ["bash", "-c", "pip install clickhouse-driver backports.zoneinfo && airflow db init && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password 'admin_password' && airflow scheduler"]
     depends_on:
       - postgres
     networks:
@@ -87,4 +90,4 @@ volumes:
 
 networks:
   click_network:
-    external: true
+    driver: bridge

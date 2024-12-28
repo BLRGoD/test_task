@@ -24,13 +24,11 @@ dag = DAG(
 )
 
 def req():
-    url = 'http://www.cbr.ru/scripts/XML_daily.asp?date_req=22/12/2024'
+    date_str = datetime.datetime.now().strftime('%d/%m/%Y')
+    url = f'http://www.cbr.ru/scripts/XML_daily.asp?date_req={date_str}'
     resp = requests.get(url)
-    if resp.status_code == 200:
-        return resp
-    else:
-        raise ConnectionError('request failed')
-    
+    resp.raise_for_status()
+    return resp    
     
 def get_data(currencies):
 
@@ -74,7 +72,7 @@ def get_data(currencies):
 
   
 def insert(currencies):
-    client = Client('127.0.0.1', port=9000, user='airflow', password='airflow')
+    client = Client('clickhouse-server', port=9000, user='airflow', password='airflow')
     
     df = get_data(currencies)
     client.execute("INSERT INTO default.ECB_table VALUES", df.to_dict('records'))
