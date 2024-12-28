@@ -63,7 +63,8 @@ def get_data(currencies):
       df.at[i,'USD_to_X'] = float(USD_rate/val)
       df.at[i,'X_to_EUR'] = float(val/EUR_rate)
       df.at[i,'EUR_to_X'] = float(EUR_rate/val)
-
+    
+    df['ExecutionTime'] = datetime.datetime.now()
 
     df[['Value','X_to_USD','USD_to_X','X_to_EUR','EUR_to_X']] = df[['Value','X_to_USD','USD_to_X','X_to_EUR','EUR_to_X']].astype(np.float64)
     df[['ID','NumCode','CharCode','Name']] = df[['ID','NumCode','CharCode','Name']].astype(str)

@@ -83,6 +83,9 @@ services:
     entrypoint: ["dbt"]
     networks:
       - click_network
+    environment:
+      - DBT_PROFILES_DIR=/root/.dbt
+    command: ["run", "--models", "average_exchange_rate_weekly"]
 
 volumes:
     postgres_data:

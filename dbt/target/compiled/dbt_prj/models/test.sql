@@ -1,0 +1,1 @@
+SELECT * FROM ECB_table

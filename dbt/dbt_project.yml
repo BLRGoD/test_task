@@ -1,0 +1,8 @@
+name: 'dbt_prj'
+version: '1.0'
+profile: 'clickhouse_profile'
+config-version: 2
+
+models:
+  dbt:
+    +materialized: table
